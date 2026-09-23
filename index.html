@@ -164,6 +164,15 @@
     border-color:var(--sf-blue);
     box-shadow: 0 2px 6px rgba(1,118,211,.25);
   }
+  /* Own charges cell trigger — below aggregate value in Recurring / One Time columns */
+  .own-chg-btn {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 11px; color: var(--sf-blue); font-weight: 600;
+    cursor: pointer; background: none; border: none; padding: 0;
+    font-family: inherit; justify-content: flex-end;
+    white-space: nowrap; user-select: none;
+  }
+  .own-chg-btn:hover { text-decoration: underline; }
   /* ── Amount cell variants ── */
 
   /*
@@ -411,11 +420,11 @@
 
   <div class="note">
     <strong>What changed from the previous version</strong>
-    Root row's Recurring Total and One Time Total are now plain grey numbers — <strong>no strikethrough, no original value</strong>.
-    Showing "£80 → £40" on the root row was misleading: the seller cannot derive that from looking at the root alone.
-    Instead, a small <strong>ⓘ icon</strong> next to the grey total appears — hover it to read what the total includes and where to find adjustments.
-    The <strong>📊 Own Charges</strong> button on the product name is the only place to inspect the root's OWN charge waterfall.
-    Child leaf rows keep the existing blue + strikethrough — it is meaningful there because no summation is involved.
+    Root row's Recurring Total and One Time Total are plain grey numbers — <strong>no strikethrough, no original value</strong>.
+    A small <strong>ⓘ icon</strong> appears below the grey total — hover it to understand what it includes.
+    A <strong>📊 own charges</strong> button below the grey value opens the waterfall for that product's OWN charges only (not the aggregate).
+    The button is column-specific: clicking it in the Recurring Total column opens the Monthly tab; clicking in One Time Total opens the One Time tab.
+    Child leaf rows keep blue + strikethrough — it is meaningful there because no summation is involved.
   </div>
 
   <!-- Visual key — always visible above the table -->
@@ -427,7 +436,7 @@
     <span class="key-sep">|</span>
     <span class="key-item grey-item"><i style="border:1px solid #b0b0b0;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-style:normal">i</i> &nbsp;Rolled-up total — hover to understand what it includes</span>
     <span class="key-sep">|</span>
-    <span class="key-item btn-item">📊 Own Charges &nbsp;View adjustments on this product's own charges</span>
+    <span class="key-item btn-item">📊 own charges &nbsp;Below grey total — click to view this product's own charge waterfall (column-specific)</span>
   </div>
 
   <div class="card">
@@ -455,7 +464,6 @@
             <div class="pn">
               <span class="chev" onclick="toggleGroup('grp-s1',this)" style="cursor:pointer" title="Click to collapse">∨</span>
               <span class="pn-text">Business Internet Enhanced</span>
-              <span class="wfi" onclick="openM('m-root')">📊 Own Charges</span>
             </div>
           </td>
           <td>—</td>
@@ -464,12 +472,10 @@
           <td class="amt-right">
             <div class="agg">
               <span class="agg-val">£25.00</span>
-              <!--
-                ⓘ icon = hover tooltip explains this is a rolled-up total and guides seller to expand or use 📊 Own Charges.
-              -->
               <span class="agg-info" data-tip-key="agg_with_own">
                 <i class="agg-info-icon">i</i>
               </span>
+              <button class="own-chg-btn" onclick="openM('m-root',0)">📊 own charges</button>
             </div>
           </td>
 
@@ -480,6 +486,7 @@
               <span class="agg-info" data-tip-key="agg_with_own">
                 <i class="agg-info-icon">i</i>
               </span>
+              <button class="own-chg-btn" onclick="openM('m-root',1)">📊 own charges</button>
             </div>
           </td>
           <td style="text-align:center"><button class="btn">Add</button></td>
@@ -570,7 +577,7 @@
       <div class="li"><div class="ls" style="background:#0176d3"></div>Blue + strikethrough on cell = leaf charge adjusted → click cell to see waterfall</div>
       <div class="li"><div class="ls" style="background:#706e6b"></div>Grey value = aggregate total (no interaction on amount cell)</div>
       <div class="li"><div class="ls" style="background:#e8e8e8;border:1px solid #ccc"></div>ⓘ icon on grey total = hover for explanation of what the rolled-up value includes</div>
-      <div class="li">📊 Own Charges button = view this product's OWN charge waterfall (not the aggregate)</div>
+      <div class="li">📊 own charges (in amount cell) = click to view this product's OWN charge waterfall — column-specific, opens the relevant tab</div>
     </div>
   </div>
 </div>
@@ -584,7 +591,7 @@
     <strong>Collapsed state — click the ▹ chevron to expand</strong>
     Only the root row is visible initially. The grey total shows the final rolled-up value — hover the ⓘ icon to understand what it includes.
     Click the <strong>▹</strong> chevron next to the product name to reveal individual child charges.
-    Use the <strong>📊 Own Charges</strong> button to inspect the root's own charge waterfall (independent of expand/collapse).
+    Use the <strong>📊 own charges</strong> button in the Recurring Total or One Time Total cell to inspect the root's own charge waterfall (independent of expand/collapse).
   </div>
   <div class="card">
     <div class="card-bar">060 Anderson Junction · click ▹ to expand</div>
@@ -605,16 +612,11 @@
             <div class="pn">
               <span class="chev" onclick="toggleGroup('grp-s2',this)" style="cursor:pointer" title="Click to expand">›</span>
               <span class="pn-text">Business Internet Enhanced</span>
-              <span class="wfi" onclick="openM('m-root')">📊 Own Charges</span>
             </div>
           </td>
           <td>—</td>
-          <td class="amt-right"><div class="agg"><span class="agg-val">£25.00</span><span class="agg-info" data-tip-key="agg_with_own">
-                <i class="agg-info-icon">i</i>
-              </span></div></td>
-          <td class="amt-right"><div class="agg"><span class="agg-val">£645.00</span><span class="agg-info" data-tip-key="agg_with_own">
-                <i class="agg-info-icon">i</i>
-              </span></div></td>
+          <td class="amt-right"><div class="agg"><span class="agg-val">£25.00</span><span class="agg-info" data-tip-key="agg_with_own"><i class="agg-info-icon">i</i></span><button class="own-chg-btn" onclick="openM('m-root',0)">📊 own charges</button></div></td>
+          <td class="amt-right"><div class="agg"><span class="agg-val">£645.00</span><span class="agg-info" data-tip-key="agg_with_own"><i class="agg-info-icon">i</i></span><button class="own-chg-btn" onclick="openM('m-root',1)">📊 own charges</button></div></td>
           <td style="text-align:center"><button class="btn">Add</button></td>
         </tr>
 
@@ -710,7 +712,7 @@
   <div class="note">
     <strong>Intermediate bundle (Security Suite) gets the same treatment as the root</strong>
     Security Suite has children → its Recurring Total and One Time Total are aggregates.
-    Grey aggregate value + ⓘ hover icon. 📊 Own Charges button for its own charge waterfall.
+    Grey value + ⓘ hover icon. <strong>📊 own charges button appears only in the Recurring Total cell</strong> because Security Suite has own recurring charges (£30→£15) but no own one-time charges — so the One Time column shows only the aggregate tooltip (no button).
     VPN Service is a leaf with BOTH a recurring AND one-time charge, both adjusted.
     Each amount cell on VPN's row is independently blue and clickable (Monthly waterfall / One Time waterfall).
     The root's aggregate totals simply reflect the sum of everything below — no original shown, no strikethrough.
@@ -725,7 +727,7 @@
     <span class="key-sep">|</span>
     <span class="key-item grey-item"><i style="border:1px solid #b0b0b0;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-style:normal">i</i> &nbsp;Rolled-up total — hover for details</span>
     <span class="key-sep">|</span>
-    <span class="key-item btn-item">📊 Own Charges &nbsp;View adjustments on this product's own charges</span>
+    <span class="key-item btn-item">📊 own charges &nbsp;Below grey total — click to view this product's own charge waterfall (column-specific)</span>
   </div>
 
   <div class="card">
@@ -759,7 +761,6 @@
             <div class="pn">
               <span class="chev" onclick="toggleGroup('grp-s3r',this)" style="cursor:pointer" title="Click to collapse">∨</span>
               <span class="pn-text">Business Internet Enhanced</span>
-              <span class="wfi" onclick="openM('m-root')">📊 Own Charges</span>
             </div>
           </td>
           <td>—</td>
@@ -770,6 +771,7 @@
               <span class="agg-info" data-tip-key="agg_with_own">
                 <i class="agg-info-icon">i</i>
               </span>
+              <button class="own-chg-btn" onclick="openM('m-root',0)">📊 own charges</button>
             </div>
           </td>
           <!-- Root aggregate One Time: £180 own + £120 SS (VPN) + £465 Install = £765 -->
@@ -779,6 +781,7 @@
               <span class="agg-info" data-tip-key="agg_with_own">
                 <i class="agg-info-icon">i</i>
               </span>
+              <button class="own-chg-btn" onclick="openM('m-root',1)">📊 own charges</button>
             </div>
           </td>
           <td style="text-align:center"><button class="btn">Add</button></td>
@@ -799,7 +802,6 @@
               <span class="tl"></span>
               <span class="chev" onclick="toggleGroup('grp-s3s',this)" style="background:#f0f4f8;border-color:#b0b0b0;cursor:pointer" title="Click to collapse">∨</span>
               <span class="pn-text">Security Suite</span>
-              <span class="wfi" onclick="openM('m-ss')">📊 Own Charges</span>
             </div>
           </td>
           <td>—</td>
@@ -810,13 +812,14 @@
               <span class="agg-info" data-tip-key="agg_with_own">
                 <i class="agg-info-icon">i</i>
               </span>
+              <button class="own-chg-btn" onclick="openM('m-ss',0)">📊 own charges</button>
             </div>
           </td>
           <!-- Bundle aggregate One Time: £0 own + £120 VPN = £120 -->
           <td class="amt-right">
             <div class="agg">
               <span class="agg-val">£120.00</span>
-              <span class="agg-info" data-tip-key="agg_with_own">
+              <span class="agg-info" data-tip-key="agg_no_own">
                 <i class="agg-info-icon">i</i>
               </span>
             </div>
@@ -907,7 +910,7 @@
       <div class="li"><div class="ls" style="background:#0176d3"></div>Blue + strikethrough = leaf charge adjusted → click cell (each cell = independent waterfall)</div>
       <div class="li"><div class="ls" style="background:#706e6b"></div>Grey = aggregate, no strikethrough, no original — final value only</div>
       <div class="li"><div class="ls" style="background:#e8e8e8;border:1px solid #ccc"></div>ⓘ icon on grey total = hover to understand the rolled-up value</div>
-      <div class="li">📊 Own Charges button = this product's OWN charge waterfall (both tabs if both charge types exist)</div>
+      <div class="li">📊 own charges (in amount cell) = this product's OWN charge waterfall — only shown in columns where the product has an own charge</div>
     </div>
   </div>
 </div>
@@ -1312,7 +1315,16 @@
 
 <script>
   /* ── Modal helpers ── */
-  function openM(id)  { document.getElementById(id).classList.add('open'); }
+  function openM(id, tabIdx) {
+    document.getElementById(id).classList.add('open');
+    if (tabIdx !== undefined) {
+      const modal = document.getElementById(id);
+      const tabs   = modal.querySelectorAll('.mtab');
+      const panels = modal.querySelectorAll('[id^="tab-"]');
+      tabs.forEach((t, i)   => t.classList.toggle('active', i === tabIdx));
+      panels.forEach((p, i) => p.style.display = (i === tabIdx) ? 'block' : 'none');
+    }
+  }
   function closeM(id) { document.getElementById(id).classList.remove('open'); }
   document.querySelectorAll('.overlay').forEach(o =>
     o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); })
@@ -1358,7 +1370,7 @@
       'This is the sum of all charges across every product in this bundle, with adjustments already applied at each individual charge level.' +
       '<ul>' +
       '<li><b>Expand this bundle</b> — each child shows its own adjusted charge</li>' +
-      '<li>Use <b>📊 Own Charges</b> — to view adjustments on this product\'s own charges</li>' +
+      '<li>Use <b>📊 own charges</b> in the amount cell below — opens the charge waterfall for this product\'s own charges only</li>' +
       '</ul>',
 
     agg_no_own:
