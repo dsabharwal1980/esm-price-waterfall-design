@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ESM Price Waterfall — Revised Design</title>
+<style>
+  :root {
+    --sf-blue: #0176d3;
+    --sf-blue-tint: #e5f0f9;
+    --sf-border: #dddbda;
+    --sf-border-2: #e8e8e8;
+    --sf-bg: #f3f3f3;
+    --sf-text: #181818;
+    --sf-muted: #706e6b;
+    --sf-red: #ba0517;
+    --sf-amber: #b46000;
+    --sf-amber-tint: #fef1e1;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 20px rgba(0,0,0,0.18);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Salesforce Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--sf-bg);
+    color: var(--sf-text);
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  /* ── Header ── */
+  .page-hdr {
+    background: linear-gradient(90deg,#032e61,#0176d3);
+    color:#fff;
+    padding: 13px 24px;
+    box-shadow: var(--shadow-sm);
+  }
+  .page-hdr h1 { font-size:15px; font-weight:700; }
+  .page-hdr p  { font-size:11px; opacity:.85; margin-top:3px; }
+
+  /* ── Nav ── */
+  .nav {
+    display:flex;
+    background:#fff;
+    border-bottom:2px solid var(--sf-border);
+    padding: 0 24px;
+    box-shadow: var(--shadow-sm);
+    gap:0;
+  }
+  .nav button {
+    padding:11px 16px;
+    font-size:13px; font-weight:600;
+    cursor:pointer;
+    border:none; border-bottom:3px solid transparent;
+    background:none; color:var(--sf-muted);
+    margin-bottom:-2px;
+    transition:color .12s,border-color .12s;
+  }
+  .nav button.active { border-bottom-color:var(--sf-blue); color:var(--sf-blue); }
+  .nav button:hover:not(.active) { color:var(--sf-text); }
+
+  /* ── Layout ── */
+  .scene { padding:20px 24px 32px; }
+  .scene + .scene { display:none; }
+
+  .note {
+    background:var(--sf-blue-tint);
+    border-left:4px solid var(--sf-blue);
+    padding:10px 14px;
+    border-radius:0 4px 4px 0;
+    font-size:12px; color:#032e61;
+    margin-bottom:16px;
+  }
+  .note strong { display:block; margin-bottom:3px; font-size:13px; }
+
+  /* ── Card ── */
+  .card {
+    background:#fff;
+    border:1px solid var(--sf-border);
+    border-radius:6px;
+    overflow:hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .card-bar {
+    padding:8px 14px;
+    background:#fafaf9;
+    border-bottom:1px solid var(--sf-border-2);
+    font-size:11.5px; color:var(--sf-muted); font-style:italic;
+  }
+
+  /* ── Table ── */
+  table { width:100%; border-collapse:collapse; }
+  th {
+    background:#fafaf9;
+    font-size:11px; font-weight:700;
+    color:var(--sf-muted);
+    text-transform:uppercase; letter-spacing:.4px;
+    padding:8px 12px;
+    text-align:left;
+    border-bottom:1px solid var(--sf-border);
+    white-space:nowrap;
+  }
+  th.right { text-align:right; }
+  td { padding:8px 12px; border-bottom:1px solid var(--sf-border-2); vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+
+  /* ── Row backgrounds ── */
+  tr.r-root   { background:#eef3f8; }
+  tr.r-root td { font-weight:700; }
+  tr.r-bundle { background:#fafaf9; }
+  tr.r-bundle td { font-weight:600; }
+  tr.r-leaf   { background:#fff; }
+
+  /* ── Indentation ── */
+  .i1 { padding-left:28px !important; }
+  .i2 { padding-left:50px !important; }
+
+  /* ── Tree connector ── */
+  .tl {
+    display:inline-block;
+    width:12px; height:12px;
+    border-left:2px solid #c9c7c5;
+    border-bottom:2px solid #c9c7c5;
+    margin-right:5px;
+    vertical-align:middle;
+    flex-shrink:0;
+  }
+
+  /* ── Chevron ── */
+  .chev {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:17px; height:17px;
+    border-radius:3px; border:1px solid #c9c7c5;
+    background:#fff; margin-right:6px;
+    cursor:pointer; font-size:10px; color:var(--sf-muted);
+    flex-shrink:0; vertical-align:middle;
+  }
+
+  /* ── Product name cell ── */
+  .pn { display:flex; align-items:center; }
+  .pn-text { flex:1; }
+
+  /* ── Price breakdown icon on parent rows ── */
+  /*
+    Visible button on any row that has children AND its own adjusted charges.
+    Opens the waterfall for THAT ROW's own charges only — not the aggregate.
+    Intentionally styled as a recognisable button so it is easy to spot.
+  */
+  .wfi {
+    display:inline-flex; align-items:center; gap:4px;
+    padding:3px 8px;
+    border-radius:12px;
+    border:1px solid #aacfef;
+    background:var(--sf-blue-tint);
+    margin-left:10px;
+    cursor:pointer;
+    font-size:11px; font-weight:600; color:var(--sf-blue);
+    flex-shrink:0; position:relative;
+    white-space:nowrap;
+    transition:background .12s,border-color .12s,color .12s,box-shadow .12s;
+    box-shadow: 0 1px 3px rgba(1,118,211,.15);
+  }
+  .wfi:hover {
+    background:#cce3f6;
+    border-color:var(--sf-blue);
+    box-shadow: 0 2px 6px rgba(1,118,211,.25);
+  }
+  .wfi .tip {
+    display:none;
+    position:absolute; bottom:28px; left:50%;
+    transform:translateX(-50%);
+    background:#032e61; color:#fff;
+    font-size:10px; padding:3px 8px; border-radius:3px;
+    white-space:nowrap; z-index:30; pointer-events:none;
+  }
+  .wfi:hover .tip { display:block; }
+
+  /* ── Amount cell variants ── */
+
+  /*
+    AGGREGATE (root / bundle rows):
+    - Show ONLY the final total. No strikethrough. No original value.
+    - Grey color signals "this is a sum, not a single charge."
+    - A small "adj" indicator (not a strikethrough) signals adjustments exist somewhere inside.
+  */
+  .amt-right { text-align:right; }
+  .agg {
+    display:flex; flex-direction:column; align-items:flex-end; gap:2px;
+  }
+  .agg-val  { color:#706e6b; font-weight:600; }
+
+  /* Info icon — tooltip is rendered via JS as a fixed overlay (avoids table overflow clipping) */
+  .agg-info {
+    display:inline-flex; align-items:center;
+    cursor:help;
+  }
+  .agg-info-icon {
+    font-size:11px; color:#a8a8a8;
+    border:1px solid #d8d8d8;
+    border-radius:50%;
+    width:15px; height:15px;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-style:normal; font-weight:700; line-height:1;
+    transition: color .12s, border-color .12s;
+    user-select:none;
+  }
+  .agg-info:hover .agg-info-icon {
+    color:var(--sf-blue);
+    border-color:var(--sf-blue);
+  }
+
+  /* Global floating tooltip — appended to body, never clipped */
+  #global-tip {
+    display:none;
+    position:fixed;
+    max-width:280px;
+    background:#032e61;
+    color:#fff;
+    font-size:12px;
+    line-height:1.65;
+    padding:11px 14px;
+    border-radius:7px;
+    z-index:9999;
+    pointer-events:none;
+    box-shadow: 0 5px 18px rgba(0,0,0,.28);
+  }
+  #global-tip strong { display:block; margin-bottom:6px; font-size:12.5px; }
+  #global-tip ul { padding-left:16px; margin-top:4px; }
+  #global-tip ul li { margin-bottom:3px; }
+
+  /*
+    LEAF adjusted:
+    - Blue + strikethrough. Cell is clickable to open waterfall.
+    - Meaningful because for a leaf: total = charge. No summation.
+  */
+  .leaf-adj { display:flex; flex-direction:column; align-items:flex-end; gap:1px; }
+  .leaf-link {
+    color:var(--sf-blue); font-weight:600;
+    cursor:pointer; text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .leaf-link:hover { border-bottom-color:var(--sf-blue); }
+  .leaf-orig { color:var(--sf-muted); text-decoration:line-through; font-size:11px; }
+
+  /* Plain zero / unadjusted */
+  .plain-zero { color:#c9c7c5; text-align:right; }
+  .plain-val  { color:var(--sf-text); text-align:right; }
+
+  /* ── Action button ── */
+  .btn {
+    padding:4px 12px;
+    border:1px solid var(--sf-blue); border-radius:4px;
+    background:#fff; color:var(--sf-blue);
+    font-size:12px; font-weight:600; cursor:pointer;
+  }
+  .btn:hover { background:var(--sf-blue-tint); }
+
+  /* ── Legend ── */
+  .legend {
+    display:flex; gap:16px; flex-wrap:wrap;
+    padding:8px 14px;
+    background:#fafaf9; border-top:1px solid var(--sf-border-2);
+    font-size:11px; color:var(--sf-muted);
+  }
+  .li { display:flex; align-items:center; gap:5px; }
+  .ls { width:11px; height:11px; border-radius:2px; flex-shrink:0; }
+
+  /* ── Hierarchy diagram ── */
+  .hier {
+    background:#fff; border:1px solid var(--sf-border);
+    border-radius:6px; padding:14px 18px;
+    font-family:'Menlo','Courier New',monospace;
+    font-size:12px; line-height:1.9;
+    margin-bottom:16px;
+    box-shadow:var(--shadow-sm);
+  }
+  .hr { color:#b46000; font-weight:700; }
+  .hb { color:#0176d3; font-weight:700; }
+  .hl { color:#2e844a; }
+  .hd { color:#b0b0b0; }
+
+  /* ── Visual key bar ── */
+  .key-bar {
+    display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+    padding:10px 14px;
+    background:#fff; border:1px solid var(--sf-border);
+    border-radius:6px; margin-bottom:16px;
+    font-size:12px;
+    box-shadow: var(--shadow-sm);
+  }
+  .key-bar .klabel { font-weight:700; color:var(--sf-muted); margin-right:4px; font-size:11px; text-transform:uppercase; letter-spacing:.4px; }
+  .key-item { display:flex; align-items:center; gap:6px; padding:4px 10px; border-radius:20px; font-size:12px; }
+  .key-item.blue-item { background:#e5f0f9; color:#0176d3; font-weight:600; border:1px solid #aacfef; }
+  .key-item.grey-item { background:#f3f3f3; color:#706e6b; font-weight:600; border:1px solid #ddd; }
+  .key-item.adj-item  { background:#fef1e1; color:#b46000; font-weight:700; border:1px solid #f9c85d; }
+  .key-item.btn-item  { background:var(--sf-blue-tint); color:var(--sf-blue); font-weight:600; border:1px solid #aacfef; }
+  .key-sep { color:#ddd; }
+
+  /* ── Divider ── */
+  .sec-label {
+    font-size:11px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.6px; color:var(--sf-muted);
+    margin-bottom:12px;
+  }
+
+  /* ── Modal ── */
+  .overlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,.38); z-index:200;
+    align-items:center; justify-content:center;
+  }
+  .overlay.open { display:flex; }
+  .modal {
+    background:#fff; border-radius:8px;
+    box-shadow:var(--shadow-md);
+    width:400px; max-width:95vw;
+    overflow:hidden;
+    animation:pop .16s ease;
+  }
+  @keyframes pop {
+    from{opacity:0;transform:scale(.96) translateY(8px)}
+    to  {opacity:1;transform:scale(1)   translateY(0)}
+  }
+  .mhdr {
+    padding:12px 16px;
+    border-bottom:1px solid var(--sf-border-2);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .mhdr h2 { font-size:14px; font-weight:700; }
+  .mclose { background:none; border:none; cursor:pointer; font-size:18px; color:var(--sf-muted); }
+  .mclose:hover { color:var(--sf-text); }
+
+  .mtabs { display:flex; border-bottom:1px solid var(--sf-border-2); }
+  .mtab {
+    padding:8px 16px; font-size:13px; font-weight:600;
+    cursor:pointer; border:none; border-bottom:2px solid transparent;
+    background:none; color:var(--sf-muted);
+  }
+  .mtab.active { border-bottom-color:var(--sf-blue); color:var(--sf-blue); }
+
+  .mbody { padding:14px 16px; }
+
+  /* Context callout inside modal */
+  .mctx {
+    background:var(--sf-amber-tint); border:1px solid #f9c85d;
+    border-radius:4px; padding:8px 10px;
+    font-size:11px; color:#7f4f00;
+    margin-bottom:12px;
+    display:flex; gap:6px; align-items:flex-start;
+  }
+  .mctx-i { font-size:13px; flex-shrink:0; margin-top:1px; }
+
+  .wf-sec {
+    font-size:10px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.5px; color:var(--sf-muted);
+    padding:10px 0 4px;
+    border-bottom:1px solid var(--sf-border-2);
+    margin-bottom:4px;
+  }
+  .wf-row {
+    display:flex; align-items:flex-start; justify-content:space-between;
+    padding:6px 0; border-bottom:1px solid var(--sf-border-2);
+    gap:10px;
+  }
+  .wf-row:last-child { border-bottom:none; }
+  .wf-row.tot {
+    padding-top:10px; margin-top:4px;
+    border-top:2px solid var(--sf-border);
+    border-bottom:none; font-weight:700;
+  }
+  .wl { flex:1; }
+  .wl-m { font-weight:600; font-size:13px; }
+  .wl-s { font-size:11px; color:var(--sf-muted); margin-top:1px; }
+  .wa { font-size:13px; font-weight:600; white-space:nowrap; }
+  .wa.base { color:var(--sf-text); }
+  .wa.disc { color:var(--sf-red); }
+  .wa.tot  { color:var(--sf-text); }
+
+  /* Rule table */
+  .rule-table td, .rule-table th { vertical-align:top; }
+  .rule-table td { padding:10px 12px; }
+  .chip {
+    display:inline-block; padding:2px 8px; border-radius:10px;
+    font-size:11px; font-weight:600;
+  }
+  .chip-grey { background:#f0f0f0; color:#706e6b; border:1px solid #ddd; }
+  .chip-blue { background:#e5f0f9; color:#0176d3; }
+</style>
+</head>
+<body>
+
+<div class="page-hdr">
+  <h1>ESM · Price Waterfall — Revised Design Mockup</h1>
+  <p>Recurring Total &amp; One Time Total only · No extra charge columns · No level labels</p>
+</div>
+
+<div class="nav">
+  <button class="active" onclick="show('s1',this)">A · 2-Level (expanded)</button>
+  <button onclick="show('s2',this)">B · 2-Level (collapsed)</button>
+  <button onclick="show('s3',this)">C · 3-Level (Root→Bundle→Leaves)</button>
+  <button onclick="show('s4',this)">D · Standalone leaf</button>
+  <button onclick="show('s5',this)">E · Design rules</button>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     A — 2-Level expanded
+══════════════════════════════════════════ -->
+<div id="s1" class="scene">
+
+  <div class="note">
+    <strong>What changed from the previous version</strong>
+    Root row's Recurring Total and One Time Total are now plain grey numbers — <strong>no strikethrough, no original value</strong>.
+    Showing "£80 → £40" on the root row was misleading: the seller cannot derive that from looking at the root alone.
+    Instead, a small <strong>ⓘ icon</strong> next to the grey total appears — hover it to read what the total includes and where to find adjustments.
+    The <strong>📊 Own Charges</strong> button on the product name is the only place to inspect the root's OWN charge waterfall.
+    Child leaf rows keep the existing blue + strikethrough — it is meaningful there because no summation is involved.
+  </div>
+
+  <!-- Visual key — always visible above the table -->
+  <div class="key-bar">
+    <span class="klabel">Key</span>
+    <span class="key-item blue-item">🔵 £465.00 / <s style="font-size:11px">£500</s> &nbsp;Leaf charge adjusted — click to see full discount breakdown</span>
+    <span class="key-sep">|</span>
+    <span class="key-item grey-item">⬜ £645.00 &nbsp;Aggregate total (root/bundle) — read-only, no interaction on cell</span>
+    <span class="key-sep">|</span>
+    <span class="key-item grey-item"><i style="border:1px solid #b0b0b0;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-style:normal">i</i> &nbsp;Rolled-up total — hover to understand what it includes</span>
+    <span class="key-sep">|</span>
+    <span class="key-item btn-item">📊 Own Charges &nbsp;View adjustments on this product's own charges</span>
+  </div>
+
+  <div class="card">
+    <div class="card-bar">060 Anderson Junction · Business Internet Enhanced · expanded</div>
+    <table>
+      <thead><tr>
+        <th style="width:155px">Member / Group</th>
+        <th style="width:42px">Qty</th>
+        <th>Product Name</th>
+        <th style="width:72px">Sub Action</th>
+        <th class="right" style="width:118px">Recurring Total</th>
+        <th class="right" style="width:118px">One Time Total</th>
+        <th style="width:68px;text-align:center">Action</th>
+      </tr></thead>
+      <tbody>
+
+        <!-- ──────────────────────────────
+             ROOT — has own Recurring (£50→£25) AND own One Time (£200→£180)
+             Recurring Total = £25 own + £0 children = £25
+             One Time Total  = £180 own + £465 Installation + £0 others = £645
+        ────────────────────────────── -->
+        <tr class="r-root">
+          <td>060 Anderson Junction</td><td>1</td>
+          <td>
+            <div class="pn">
+              <span class="chev">∨</span>
+              <span class="pn-text">Business Internet Enhanced</span>
+              <!--
+                "Own Charges" button: root has BOTH recurring and one-time own charges, both adjusted.
+                Modal will show Monthly tab (£50→£25) and One Time tab (£200→£180).
+              -->
+              <span class="wfi" onclick="openM('m-root')">📊 Own Charges<span class="tip">View this product's own price breakdown</span></span>
+            </div>
+          </td>
+          <td>—</td>
+
+          <!-- Recurring Total — grey aggregate, final value only, no strikethrough -->
+          <td class="amt-right">
+            <div class="agg">
+              <span class="agg-val">£25.00</span>
+              <!--
+                ⓘ icon = hover tooltip explains this is a rolled-up total and guides seller to expand or use 📊 Own Charges.
+              -->
+              <span class="agg-info">
+                <i class="agg-info-icon">i</i>
+              </span>
+            </div>
+          </td>
+
+          <!-- One Time Total — grey aggregate, final value only -->
+          <td class="amt-right">
+            <div class="agg">
+              <span class="agg-val">£645.00</span>
+              <span class="agg-info">
+                <i class="agg-info-icon">i</i>
+              </span>
+            </div>
+          </td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+        <!-- CHILD: Internet Security Software — no charge -->
+        <tr class="r-leaf">
+          <td></td><td>1</td>
+          <td class="i1"><span class="tl"></span>Internet Security Software</td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+        <!-- CHILD: CPE — no charge -->
+        <tr class="r-leaf">
+          <td></td><td>1</td>
+          <td class="i1"><span class="tl"></span>CPE</td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+        <!-- CHILD: Installation — adjusted OT charge → BLUE + clickable -->
+        <tr class="r-leaf">
+          <td></td><td>1</td>
+          <td class="i1"><span class="tl"></span>Installation</td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="amt-right">
+            <!--
+              Leaf: amount cell = the charge. No summation.
+              Strikethrough IS meaningful here. Click to see waterfall.
+            -->
+            <div class="leaf-adj">
+              <a class="leaf-link" onclick="openM('m-install')">£465.00</a>
+              <span class="leaf-orig">£500.00</span>
+            </div>
+          </td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+        <!-- CHILD: Public Wi-Fi — no charge -->
+        <tr class="r-leaf">
+          <td></td><td>1</td>
+          <td class="i1"><span class="tl"></span>Public Wi-Fi</td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+        <!-- CHILD: LTE Backup — no charge -->
+        <tr class="r-leaf">
+          <td></td><td>1</td>
+          <td class="i1"><span class="tl"></span>LTE Backup</td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+        <!-- CHILD: Static IP — no charge -->
+        <tr class="r-leaf">
+          <td></td><td>1</td>
+          <td class="i1"><span class="tl"></span>Static IP</td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+        <!-- CHILD: Unlimited Data Add-on — no charge -->
+        <tr class="r-leaf">
+          <td></td><td>1</td>
+          <td class="i1"><span class="tl"></span>Unlimited Data Add-on</td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+      </tbody>
+    </table>
+    <div class="legend">
+      <div class="li"><div class="ls" style="background:#0176d3"></div>Blue + strikethrough on cell = leaf charge adjusted → click cell to see waterfall</div>
+      <div class="li"><div class="ls" style="background:#706e6b"></div>Grey value = aggregate total (no interaction on amount cell)</div>
+      <div class="li"><div class="ls" style="background:#e8e8e8;border:1px solid #ccc"></div>ⓘ icon on grey total = hover for explanation of what the rolled-up value includes</div>
+      <div class="li">📊 Own Charges button = view this product's OWN charge waterfall (not the aggregate)</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     B — 2-Level collapsed
+══════════════════════════════════════════ -->
+<div id="s2" class="scene" style="display:none">
+  <div class="note">
+    <strong>Collapsed state</strong>
+    Only the root row is visible. The grey total shows the final rolled-up value — hover the ⓘ icon to understand what it includes.
+    Expand to see individual child charges. Use the <strong>📊 Own Charges</strong> button to inspect the root's own charge waterfall.
+  </div>
+  <div class="card">
+    <div class="card-bar">060 Anderson Junction · collapsed</div>
+    <table>
+      <thead><tr>
+        <th style="width:155px">Member / Group</th>
+        <th style="width:42px">Qty</th>
+        <th>Product Name</th>
+        <th style="width:72px">Sub Action</th>
+        <th class="right" style="width:118px">Recurring Total</th>
+        <th class="right" style="width:118px">One Time Total</th>
+        <th style="width:68px;text-align:center">Action</th>
+      </tr></thead>
+      <tbody>
+        <tr class="r-root">
+          <td>060 Anderson Junction</td><td>1</td>
+          <td>
+            <div class="pn">
+              <span class="chev">›</span>
+              <span class="pn-text">Business Internet Enhanced</span>
+              <span class="wfi" onclick="openM('m-root')">📊 Own Charges<span class="tip">View this product's own price breakdown</span></span>
+            </div>
+          </td>
+          <td>—</td>
+          <td class="amt-right"><div class="agg"><span class="agg-val">£25.00</span><span class="agg-info">
+                <i class="agg-info-icon">i</i>
+              </span></div></td>
+          <td class="amt-right"><div class="agg"><span class="agg-val">£645.00</span><span class="agg-info">
+                <i class="agg-info-icon">i</i>
+              </span></div></td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     C — 3-Level (Root → Bundle → Leaves)
+══════════════════════════════════════════ -->
+<div id="s3" class="scene" style="display:none">
+
+  <div class="hier">
+<span class="hr">Business Internet Enhanced</span>  <span class="hd">← Root · own Recurring (£50→£25) + own One Time (£200→£180)</span>
+<span class="hd">├── </span><span class="hb">Security Suite</span>  <span class="hd">← Bundle · own Recurring (£30→£15) · no own One Time</span>
+<span class="hd">│   ├── </span><span class="hl">Firewall</span>  <span class="hd">← Leaf · no charges</span>
+<span class="hd">│   └── </span><span class="hl">VPN Service</span>  <span class="hd">← Leaf · Recurring (£20→£15) + One Time (£150→£120)</span>
+<span class="hd">├── </span><span class="hl">CPE</span>  <span class="hd">← Leaf · no charges</span>
+<span class="hd">├── </span><span class="hl">Installation</span>  <span class="hd">← Leaf · One Time (£500→£465)</span>
+<span class="hd">└── </span><span class="hl">Public Wi-Fi</span>  <span class="hd">← Leaf · no charges</span>
+  </div>
+
+  <div class="note">
+    <strong>Intermediate bundle (Security Suite) gets the same treatment as the root</strong>
+    Security Suite has children → its Recurring Total and One Time Total are aggregates.
+    Grey aggregate value + ⓘ hover icon. 📊 Own Charges button for its own charge waterfall.
+    VPN Service is a leaf with BOTH a recurring AND one-time charge, both adjusted.
+    Each amount cell on VPN's row is independently blue and clickable (Monthly waterfall / One Time waterfall).
+    The root's aggregate totals simply reflect the sum of everything below — no original shown, no strikethrough.
+  </div>
+
+  <!-- Visual key -->
+  <div class="key-bar">
+    <span class="klabel">Key</span>
+    <span class="key-item blue-item">🔵 £120 / <s style="font-size:11px">£150</s> &nbsp;Leaf charge adjusted — click THAT CELL to see breakdown (each charge independently)</span>
+    <span class="key-sep">|</span>
+    <span class="key-item grey-item">⬜ £55.00 &nbsp;Aggregate total — root or bundle row, no interaction</span>
+    <span class="key-sep">|</span>
+    <span class="key-item grey-item"><i style="border:1px solid #b0b0b0;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-style:normal">i</i> &nbsp;Rolled-up total — hover for details</span>
+    <span class="key-sep">|</span>
+    <span class="key-item btn-item">📊 Own Charges &nbsp;View adjustments on this product's own charges</span>
+  </div>
+
+  <div class="card">
+    <div class="card-bar">060 Anderson Junction · full 3-level tree</div>
+    <table>
+      <thead><tr>
+        <th style="width:155px">Member / Group</th>
+        <th style="width:42px">Qty</th>
+        <th>Product Name</th>
+        <th style="width:72px">Sub Action</th>
+        <th class="right" style="width:118px">Recurring Total</th>
+        <th class="right" style="width:118px">One Time Total</th>
+        <th style="width:68px;text-align:center">Action</th>
+      </tr></thead>
+      <tbody>
+
+        <!-- ═══ LEVEL 0: ROOT ═══
+             Own Recurring:  £50 → £25
+             Own One Time:  £200 → £180
+             Aggregate Recurring = £25 (own) + £15 (SS bundle) + £15 (VPN) = £55
+             Wait — VPN recurring rolls up to SS bundle, SS bundle aggregates it.
+             Let me be careful:
+               Root Recurring = Root own (£25) + SS bundle agg (£15 + VPN £15 = £30) + CPE £0 + Install £0 + WiFi £0
+               = £25 + £30 = £55
+             Root One Time   = Root own (£180) + SS bundle agg (£120) + CPE £0 + Install £465 + WiFi £0
+               = £180 + £120 + £465 = £765
+        -->
+        <tr class="r-root">
+          <td>060 Anderson Junction</td><td>1</td>
+          <td>
+            <div class="pn">
+              <span class="chev">∨</span>
+              <span class="pn-text">Business Internet Enhanced</span>
+              <span class="wfi" onclick="openM('m-root')">📊 Own Charges<span class="tip">View this product's own price breakdown</span></span>
+            </div>
+          </td>
+          <td>—</td>
+          <!-- Root aggregate Recurring: £25 own + £30 SS (£15 own + £15 VPN) = £55 -->
+          <td class="amt-right">
+            <div class="agg">
+              <span class="agg-val">£55.00</span>
+              <span class="agg-info">
+                <i class="agg-info-icon">i</i>
+              </span>
+            </div>
+          </td>
+          <!-- Root aggregate One Time: £180 own + £120 SS (VPN) + £465 Install = £765 -->
+          <td class="amt-right">
+            <div class="agg">
+              <span class="agg-val">£765.00</span>
+              <span class="agg-info">
+                <i class="agg-info-icon">i</i>
+              </span>
+            </div>
+          </td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+        <!-- ═══ LEVEL 1: BUNDLE — Security Suite ═══
+             Own Recurring: £30 → £15 (adjusted)
+             Own One Time:  £0
+             Children Recurring: VPN £15 + Firewall £0 = £15
+             Children One Time:  VPN £120 + Firewall £0 = £120
+             Bundle Aggregate Recurring = £15 own + £15 VPN = £30
+             Bundle Aggregate One Time  = £0 own  + £120 VPN = £120
+        -->
+        <tr class="r-bundle">
+          <td></td><td>1</td>
+          <td class="i1">
+            <div class="pn">
+              <span class="tl"></span>
+              <span class="chev" style="background:#f0f4f8;border-color:#b0b0b0">∨</span>
+              <span class="pn-text">Security Suite</span>
+              <!--
+                Security Suite has children → aggregate treatment.
+                Has own recurring charge adjusted → 📊 Own Charges button present. Grey aggregate with ⓘ hover.
+                One Time tab in modal will say "No own charge."
+              -->
+              <span class="wfi" onclick="openM('m-ss')">📊 Own Charges<span class="tip">View this product's own price breakdown</span></span>
+            </div>
+          </td>
+          <td>—</td>
+          <!-- Bundle aggregate Recurring: £15 own + £15 VPN = £30 -->
+          <td class="amt-right">
+            <div class="agg">
+              <span class="agg-val">£30.00</span>
+              <span class="agg-info">
+                <i class="agg-info-icon">i</i>
+              </span>
+            </div>
+          </td>
+          <!-- Bundle aggregate One Time: £0 own + £120 VPN = £120 -->
+          <td class="amt-right">
+            <div class="agg">
+              <span class="agg-val">£120.00</span>
+              <span class="agg-info">
+                <i class="agg-info-icon">i</i>
+              </span>
+            </div>
+          </td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+        <!-- ═══ LEVEL 2: Firewall — leaf, no charges ═══ -->
+        <tr class="r-leaf">
+          <td></td><td>1</td>
+          <td class="i2"><div class="pn"><span class="tl"></span>Firewall</div></td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+        <!-- ═══ LEVEL 2: VPN Service — leaf, BOTH recurring AND one-time adjusted ═══
+             Recurring: £20 → £15
+             One Time:  £150 → £120
+             Each cell is independently blue+clickable.
+        -->
+        <tr class="r-leaf">
+          <td></td><td>1</td>
+          <td class="i2"><div class="pn"><span class="tl"></span>VPN Service</div></td>
+          <td>—</td>
+          <!--
+            LEAF: Recurring charge adjusted → blue + strikethrough on this cell.
+            Click → Monthly waterfall for VPN.
+          -->
+          <td class="amt-right">
+            <div class="leaf-adj">
+              <a class="leaf-link" onclick="openM('m-vpn-rec')">£15.00</a>
+              <span class="leaf-orig">£20.00</span>
+            </div>
+          </td>
+          <!--
+            LEAF: One Time charge adjusted → blue + strikethrough on this cell.
+            Click → One Time waterfall for VPN.
+          -->
+          <td class="amt-right">
+            <div class="leaf-adj">
+              <a class="leaf-link" onclick="openM('m-vpn-ot')">£120.00</a>
+              <span class="leaf-orig">£150.00</span>
+            </div>
+          </td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+        <!-- ═══ LEVEL 1: CPE — leaf, no charges ═══ -->
+        <tr class="r-leaf">
+          <td></td><td>1</td>
+          <td class="i1"><div class="pn"><span class="tl"></span>CPE</div></td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+        <!-- ═══ LEVEL 1: Installation — leaf, adjusted OT ═══ -->
+        <tr class="r-leaf">
+          <td></td><td>1</td>
+          <td class="i1"><div class="pn"><span class="tl"></span>Installation</div></td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="amt-right">
+            <div class="leaf-adj">
+              <a class="leaf-link" onclick="openM('m-install')">£465.00</a>
+              <span class="leaf-orig">£500.00</span>
+            </div>
+          </td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+        <!-- ═══ LEVEL 1: Public Wi-Fi — leaf, no charges ═══ -->
+        <tr class="r-leaf">
+          <td></td><td>1</td>
+          <td class="i1"><div class="pn"><span class="tl"></span>Public Wi-Fi</div></td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+      </tbody>
+    </table>
+    <div class="legend">
+      <div class="li"><div class="ls" style="background:#0176d3"></div>Blue + strikethrough = leaf charge adjusted → click cell (each cell = independent waterfall)</div>
+      <div class="li"><div class="ls" style="background:#706e6b"></div>Grey = aggregate, no strikethrough, no original — final value only</div>
+      <div class="li"><div class="ls" style="background:#e8e8e8;border:1px solid #ccc"></div>ⓘ icon on grey total = hover to understand the rolled-up value</div>
+      <div class="li">📊 Own Charges button = this product's OWN charge waterfall (both tabs if both charge types exist)</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     D — Standalone leaf
+══════════════════════════════════════════ -->
+<div id="s4" class="scene" style="display:none">
+  <div class="note">
+    <strong>Standalone leaf — no change</strong>
+    No children, no aggregate. Amount cell = the charge. Blue + strikethrough remains correct and unchanged.
+  </div>
+  <div class="card">
+    <div class="card-bar">Standalone products</div>
+    <table>
+      <thead><tr>
+        <th style="width:155px">Member / Group</th>
+        <th style="width:42px">Qty</th>
+        <th>Product Name</th>
+        <th style="width:72px">Sub Action</th>
+        <th class="right" style="width:118px">Recurring Total</th>
+        <th class="right" style="width:118px">One Time Total</th>
+        <th style="width:68px;text-align:center">Action</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td>060 Anderson Junction</td><td>1</td>
+          <td>500 Minutes &amp; 500 Texts 30 Days</td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="amt-right"><div class="leaf-adj"><a class="leaf-link" onclick="openM('m-sa1')">£10.00</a><span class="leaf-orig">£15.00</span></div></td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+        <tr>
+          <td>060 Anderson Junction</td><td>1</td>
+          <td>5GB, 500 Minutes &amp; 500 Texts 30 Days</td>
+          <td>—</td>
+          <td class="amt-right"><div class="leaf-adj"><a class="leaf-link" onclick="openM('m-sa2')">£10.00</a><span class="leaf-orig">£20.00</span></div></td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     E — Design rules
+══════════════════════════════════════════ -->
+<div id="s5" class="scene" style="display:none">
+
+  <div class="note">
+    <strong>Single question that drives all UI decisions</strong>
+    Does this row have children? Yes → aggregate treatment. No → charge treatment.
+    Same rule at every nesting depth. No special-casing for "root" vs "bundle."
+  </div>
+
+  <div class="card">
+    <table class="rule-table">
+      <thead><tr>
+        <th style="width:170px">Row condition</th>
+        <th>Amount cell (Recurring / One Time)</th>
+        <th style="width:200px">Waterfall entry</th>
+        <th style="width:160px">ⓘ icon shown?</th>
+      </tr></thead>
+      <tbody>
+        <tr class="r-root">
+          <td><strong>Has children</strong><br/><span style="font-size:11px;color:var(--sf-muted)">Root or any intermediate bundle</span></td>
+          <td>
+            <div class="agg" style="align-items:flex-start">
+              <span class="agg-val">Grey final total</span>
+              <span style="font-size:11px;color:var(--sf-muted);margin-top:2px">No strikethrough. No original value.<br/>Seller cannot meaningfully interpret an aggregate "original."</span>
+            </div>
+          </td>
+          <td>📊 Own Charges button on Product Name<br/><span style="font-size:11px;color:var(--sf-muted)">Opens this product's OWN charge waterfall (separate from children)</span></td>
+          <td>Yes — when ANY charge in the subtree (own or descendant) has an adjustment</td>
+        </tr>
+        <tr class="r-leaf">
+          <td><strong>No children (leaf)</strong><br/><span style="font-size:11px;color:var(--sf-muted)">At any nesting depth</span></td>
+          <td>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="leaf-adj" style="align-items:flex-start">
+                <span style="color:var(--sf-blue);font-weight:600">Blue value (if adjusted)</span>
+                <span class="leaf-orig" style="text-align:left">Strikethrough original</span>
+              </div>
+              <span style="font-size:11px;color:var(--sf-muted)">Strikethrough is meaningful here — amount cell = charge, no summation involved.</span>
+            </div>
+          </td>
+          <td>Click the amount cell<br/><span style="font-size:11px;color:var(--sf-muted)">Each cell (Recurring / One Time) opens its own waterfall independently</span></td>
+          <td>Not needed — blue + strikethrough already communicates adjustment clearly</td>
+        </tr>
+        <tr>
+          <td colspan="4" style="background:#fafaf9;padding:10px 12px;font-size:12px">
+            <strong>📊 Own Charges button visibility rule:</strong> Show the icon only when this specific product has ITS OWN charge(s) with adjustments.
+            A product that has children but no own adjusted charges → show grey aggregate total with ⓘ icon, no 📊 Own Charges button (that only appears when OWN charges are adjusted).
+            <br/><br/>
+            <strong>ⓘ icon on aggregate:</strong> Always present on parent rows (root/bundle). Hovering explains "this is a rolled-up total — expand or use 📊 Own Charges to see where adjustments are applied."
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+
+<!-- ══════════════════════════════════
+     MODALS
+══════════════════════════════════ -->
+
+<!-- Root's OWN charges waterfall — has BOTH Monthly and One Time -->
+<div class="overlay" id="m-root">
+  <div class="modal">
+    <div class="mhdr">
+      <h2>📊 Price Waterfall</h2>
+      <button class="mclose" onclick="closeM('m-root')">×</button>
+    </div>
+    <div class="mtabs">
+      <button class="mtab active" onclick="switchTab(this,'m-root','tab-root-m')">Monthly</button>
+      <button class="mtab" onclick="switchTab(this,'m-root','tab-root-ot')">One Time</button>
+    </div>
+    <div class="mbody">
+      <div class="mctx">
+        <span class="mctx-i">ℹ</span>
+        <div><strong>Business Internet Enhanced — own charges only</strong><br/>
+        This shows the pricing waterfall for charges that belong directly to this product.
+        Charges from child products are shown on their own rows.</div>
+      </div>
+
+      <!-- Monthly tab -->
+      <div id="tab-root-m">
+        <div class="wf-sec">Monthly Charge · Business Internet Enhanced</div>
+        <div class="wf-row"><div class="wl"><div class="wl-m">Base Price</div></div><div class="wa base">£50.00</div></div>
+        <div class="wf-row"><div class="wl"><div class="wl-m">Discount</div><div class="wl-s">testQuoteForContractDisc01</div></div><div class="wa disc">−£15.00</div></div>
+        <div class="wf-row"><div class="wl"><div class="wl-m">Discount</div><div class="wl-s">CPQAccountDis</div></div><div class="wa disc">−£10.00</div></div>
+        <div class="wf-row tot"><div class="wl"><div class="wl-m">Total</div></div><div class="wa tot">£25.00</div></div>
+      </div>
+
+      <!-- One Time tab (hidden by default) -->
+      <div id="tab-root-ot" style="display:none">
+        <div class="wf-sec">One Time Charge · Business Internet Enhanced</div>
+        <div class="wf-row"><div class="wl"><div class="wl-m">Base Price</div></div><div class="wa base">£200.00</div></div>
+        <div class="wf-row"><div class="wl"><div class="wl-m">Discount</div><div class="wl-s">testQuoteForContractDisc01</div></div><div class="wa disc">−£20.00</div></div>
+        <div class="wf-row tot"><div class="wl"><div class="wl-m">Total</div></div><div class="wa tot">£180.00</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Security Suite Bundle's OWN recurring charge -->
+<div class="overlay" id="m-ss">
+  <div class="modal">
+    <div class="mhdr">
+      <h2>📊 Price Waterfall</h2>
+      <button class="mclose" onclick="closeM('m-ss')">×</button>
+    </div>
+    <div class="mtabs">
+      <button class="mtab active" onclick="switchTab(this,'m-ss','tab-ss-m')">Monthly</button>
+      <button class="mtab" onclick="switchTab(this,'m-ss','tab-ss-ot')">One Time</button>
+    </div>
+    <div class="mbody">
+      <div class="mctx">
+        <span class="mctx-i">ℹ</span>
+        <div><strong>Security Suite — own charges only</strong><br/>
+        Child charges (Firewall, VPN Service) are shown on their own rows.</div>
+      </div>
+      <div id="tab-ss-m">
+        <div class="wf-sec">Monthly Charge · Security Suite</div>
+        <div class="wf-row"><div class="wl"><div class="wl-m">Base Price</div></div><div class="wa base">£30.00</div></div>
+        <div class="wf-row"><div class="wl"><div class="wl-m">Discount</div><div class="wl-s">BundleDiscount01</div></div><div class="wa disc">−£15.00</div></div>
+        <div class="wf-row tot"><div class="wl"><div class="wl-m">Total</div></div><div class="wa tot">£15.00</div></div>
+      </div>
+      <div id="tab-ss-ot" style="display:none">
+        <div class="wf-sec">One Time Charge · Security Suite</div>
+        <div class="wf-row"><div class="wl"><div class="wl-m" style="color:var(--sf-muted);font-weight:400;font-style:italic">No own one-time charge on this product.</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VPN Service — Monthly waterfall (leaf) -->
+<div class="overlay" id="m-vpn-rec">
+  <div class="modal">
+    <div class="mhdr"><h2>📊 Price Waterfall</h2><button class="mclose" onclick="closeM('m-vpn-rec')">×</button></div>
+    <div class="mtabs"><button class="mtab active">Monthly</button><button class="mtab" onclick="closeM('m-vpn-rec');openM('m-vpn-ot')">One Time</button></div>
+    <div class="mbody">
+      <div class="wf-sec">Monthly Charge · VPN Service</div>
+      <div class="wf-row"><div class="wl"><div class="wl-m">Base Price</div></div><div class="wa base">£20.00</div></div>
+      <div class="wf-row"><div class="wl"><div class="wl-m">Discount</div><div class="wl-s">CPQAccountDis</div></div><div class="wa disc">−£5.00</div></div>
+      <div class="wf-row tot"><div class="wl"><div class="wl-m">Total</div></div><div class="wa tot">£15.00</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- VPN Service — One Time waterfall (leaf) -->
+<div class="overlay" id="m-vpn-ot">
+  <div class="modal">
+    <div class="mhdr"><h2>📊 Price Waterfall</h2><button class="mclose" onclick="closeM('m-vpn-ot')">×</button></div>
+    <div class="mtabs"><button class="mtab" onclick="closeM('m-vpn-ot');openM('m-vpn-rec')">Monthly</button><button class="mtab active">One Time</button></div>
+    <div class="mbody">
+      <div class="wf-sec">One Time Charge · VPN Service</div>
+      <div class="wf-row"><div class="wl"><div class="wl-m">Base Price</div></div><div class="wa base">£150.00</div></div>
+      <div class="wf-row"><div class="wl"><div class="wl-m">Discount</div><div class="wl-s">CPQAccountDis</div></div><div class="wa disc">−£30.00</div></div>
+      <div class="wf-row tot"><div class="wl"><div class="wl-m">Total</div></div><div class="wa tot">£120.00</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Installation — One Time waterfall -->
+<div class="overlay" id="m-install">
+  <div class="modal">
+    <div class="mhdr"><h2>📊 Price Waterfall</h2><button class="mclose" onclick="closeM('m-install')">×</button></div>
+    <div class="mtabs"><button class="mtab">Monthly</button><button class="mtab active">One Time</button></div>
+    <div class="mbody">
+      <div class="wf-sec">One Time Charge · Installation</div>
+      <div class="wf-row"><div class="wl"><div class="wl-m">Base Price</div></div><div class="wa base">£500.00</div></div>
+      <div class="wf-row"><div class="wl"><div class="wl-m">Discount</div><div class="wl-s">testQuoteForContractDisc01</div></div><div class="wa disc">−£5.00</div></div>
+      <div class="wf-row"><div class="wl"><div class="wl-m">Discount</div><div class="wl-s">CPQAccountDis</div></div><div class="wa disc">−£30.00</div></div>
+      <div class="wf-row tot"><div class="wl"><div class="wl-m">Total</div></div><div class="wa tot">£465.00</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Standalone leaf 1 -->
+<div class="overlay" id="m-sa1">
+  <div class="modal">
+    <div class="mhdr"><h2>📊 Price Waterfall</h2><button class="mclose" onclick="closeM('m-sa1')">×</button></div>
+    <div class="mtabs"><button class="mtab">Monthly</button><button class="mtab active">One Time</button></div>
+    <div class="mbody">
+      <div class="wf-sec">One Time · 500 Minutes &amp; 500 Texts</div>
+      <div class="wf-row"><div class="wl"><div class="wl-m">Base Price</div></div><div class="wa base">£15.00</div></div>
+      <div class="wf-row"><div class="wl"><div class="wl-m">Discount</div><div class="wl-s">CPQAccountDis</div></div><div class="wa disc">−£5.00</div></div>
+      <div class="wf-row tot"><div class="wl"><div class="wl-m">Total</div></div><div class="wa tot">£10.00</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Standalone leaf 2 -->
+<div class="overlay" id="m-sa2">
+  <div class="modal">
+    <div class="mhdr"><h2>📊 Price Waterfall</h2><button class="mclose" onclick="closeM('m-sa2')">×</button></div>
+    <div class="mtabs"><button class="mtab active">Monthly</button><button class="mtab">One Time</button></div>
+    <div class="mbody">
+      <div class="wf-sec">Monthly · 5GB, 500 Minutes &amp; 500 Texts</div>
+      <div class="wf-row"><div class="wl"><div class="wl-m">Base Price</div></div><div class="wa base">£20.00</div></div>
+      <div class="wf-row"><div class="wl"><div class="wl-m">Discount</div><div class="wl-s">testQuoteForContractDisc01</div></div><div class="wa disc">−£10.00</div></div>
+      <div class="wf-row tot"><div class="wl"><div class="wl-m">Total</div></div><div class="wa tot">£10.00</div></div>
+    </div>
+  </div>
+</div>
+
+<div style="height:48px"></div>
+
+<!-- Global tooltip rendered at body level — never clipped by table overflow -->
+<div id="global-tip"></div>
+
+<script>
+  /* ── Modal helpers ── */
+  function openM(id)  { document.getElementById(id).classList.add('open'); }
+  function closeM(id) { document.getElementById(id).classList.remove('open'); }
+  document.querySelectorAll('.overlay').forEach(o =>
+    o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); })
+  );
+
+  /* ── Tab switching inside modals ── */
+  function switchTab(btn, modalId, showTabId) {
+    const modal = document.getElementById(modalId);
+    modal.querySelectorAll('.mtab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    modal.querySelectorAll('[id^="tab-"]').forEach(p => p.style.display = 'none');
+    document.getElementById(showTabId).style.display = 'block';
+  }
+
+  /* ── Scenario tabs ── */
+  function show(id, btn) {
+    document.querySelectorAll('.scene').forEach(s => s.style.display = 'none');
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).style.display = 'block';
+    btn.classList.add('active');
+  }
+
+  /* ── Global floating tooltip for .agg-info icons ──
+     Appended to <body> so it is never clipped by table/card overflow.
+  ── */
+  const tip = document.getElementById('global-tip');
+
+  const TOOLTIP_HTML =
+    '<strong>Rolled-up total</strong>' +
+    'This is the sum of all charges across every product in this bundle, ' +
+    'with any adjustments already applied at the individual charge level.' +
+    '<ul>' +
+    '<li><b>Expand this bundle</b> — each child product shows its own adjusted charge</li>' +
+    '<li>Use <b>📊 Own Charges</b> — to view adjustments applied to this product\'s own charges</li>' +
+    '</ul>';
+
+  document.addEventListener('mouseover', function(e) {
+    const icon = e.target.closest('.agg-info');
+    if (!icon) return;
+    tip.innerHTML = TOOLTIP_HTML;
+    tip.style.display = 'block';
+    positionTip(e);
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (tip.style.display === 'block') positionTip(e);
+  });
+
+  document.addEventListener('mouseout', function(e) {
+    if (e.target.closest('.agg-info')) tip.style.display = 'none';
+  });
+
+  function positionTip(e) {
+    const margin = 14;
+    const tw = tip.offsetWidth  || 280;
+    const th = tip.offsetHeight || 120;
+    let x = e.clientX + margin;
+    let y = e.clientY - th - margin;
+    /* keep inside viewport */
+    if (x + tw > window.innerWidth  - 8) x = e.clientX - tw - margin;
+    if (y < 8) y = e.clientY + margin;
+    tip.style.left = x + 'px';
+    tip.style.top  = y + 'px';
+  }
+</script>
+</body>
+</html>
