@@ -208,11 +208,22 @@
     border-color:var(--sf-blue);
   }
 
+  /* Column header info icon — subtle, activates same global tooltip */
+  .col-info {
+    font-size:11px; color:#b8b8b8;
+    cursor:help;
+    vertical-align:middle;
+    margin-left:2px;
+    transition: color .12s;
+    user-select:none;
+  }
+  .col-info:hover { color:var(--sf-blue); }
+
   /* Global floating tooltip — appended to body, never clipped */
   #global-tip {
     display:none;
     position:fixed;
-    max-width:280px;
+    max-width:300px;
     background:#032e61;
     color:#fff;
     font-size:12px;
@@ -398,6 +409,7 @@
   <button onclick="show('s2',this)">B · 2-Level (collapsed)</button>
   <button onclick="show('s3',this)">C · 3-Level (Root→Bundle→Leaves)</button>
   <button onclick="show('s4',this)">D · Standalone leaf</button>
+  <button onclick="show('s6',this)">F · Pure container (no own charges)</button>
   <button onclick="show('s5',this)">E · Design rules</button>
 </div>
 
@@ -436,8 +448,8 @@
         <th style="width:42px">Qty</th>
         <th>Product Name</th>
         <th style="width:72px">Sub Action</th>
-        <th class="right" style="width:118px">Recurring Total</th>
-        <th class="right" style="width:118px">One Time Total</th>
+        <th class="right" style="width:118px">Recurring Total <span class="col-info" data-tip-key="col_recurring">ⓘ</span></th>
+        <th class="right" style="width:118px">One Time Total <span class="col-info" data-tip-key="col_onetime">ⓘ</span></th>
         <th style="width:68px;text-align:center">Action</th>
       </tr></thead>
       <tbody>
@@ -469,7 +481,7 @@
               <!--
                 ⓘ icon = hover tooltip explains this is a rolled-up total and guides seller to expand or use 📊 Own Charges.
               -->
-              <span class="agg-info">
+              <span class="agg-info" data-tip-key="agg_with_own">
                 <i class="agg-info-icon">i</i>
               </span>
             </div>
@@ -479,7 +491,7 @@
           <td class="amt-right">
             <div class="agg">
               <span class="agg-val">£645.00</span>
-              <span class="agg-info">
+              <span class="agg-info" data-tip-key="agg_with_own">
                 <i class="agg-info-icon">i</i>
               </span>
             </div>
@@ -595,8 +607,8 @@
         <th style="width:42px">Qty</th>
         <th>Product Name</th>
         <th style="width:72px">Sub Action</th>
-        <th class="right" style="width:118px">Recurring Total</th>
-        <th class="right" style="width:118px">One Time Total</th>
+        <th class="right" style="width:118px">Recurring Total <span class="col-info" data-tip-key="col_recurring">ⓘ</span></th>
+        <th class="right" style="width:118px">One Time Total <span class="col-info" data-tip-key="col_onetime">ⓘ</span></th>
         <th style="width:68px;text-align:center">Action</th>
       </tr></thead>
       <tbody>
@@ -610,10 +622,10 @@
             </div>
           </td>
           <td>—</td>
-          <td class="amt-right"><div class="agg"><span class="agg-val">£25.00</span><span class="agg-info">
+          <td class="amt-right"><div class="agg"><span class="agg-val">£25.00</span><span class="agg-info" data-tip-key="agg_with_own">
                 <i class="agg-info-icon">i</i>
               </span></div></td>
-          <td class="amt-right"><div class="agg"><span class="agg-val">£645.00</span><span class="agg-info">
+          <td class="amt-right"><div class="agg"><span class="agg-val">£645.00</span><span class="agg-info" data-tip-key="agg_with_own">
                 <i class="agg-info-icon">i</i>
               </span></div></td>
           <td style="text-align:center"><button class="btn">Add</button></td>
@@ -668,8 +680,8 @@
         <th style="width:42px">Qty</th>
         <th>Product Name</th>
         <th style="width:72px">Sub Action</th>
-        <th class="right" style="width:118px">Recurring Total</th>
-        <th class="right" style="width:118px">One Time Total</th>
+        <th class="right" style="width:118px">Recurring Total <span class="col-info" data-tip-key="col_recurring">ⓘ</span></th>
+        <th class="right" style="width:118px">One Time Total <span class="col-info" data-tip-key="col_onetime">ⓘ</span></th>
         <th style="width:68px;text-align:center">Action</th>
       </tr></thead>
       <tbody>
@@ -699,7 +711,7 @@
           <td class="amt-right">
             <div class="agg">
               <span class="agg-val">£55.00</span>
-              <span class="agg-info">
+              <span class="agg-info" data-tip-key="agg_with_own">
                 <i class="agg-info-icon">i</i>
               </span>
             </div>
@@ -708,7 +720,7 @@
           <td class="amt-right">
             <div class="agg">
               <span class="agg-val">£765.00</span>
-              <span class="agg-info">
+              <span class="agg-info" data-tip-key="agg_with_own">
                 <i class="agg-info-icon">i</i>
               </span>
             </div>
@@ -744,7 +756,7 @@
           <td class="amt-right">
             <div class="agg">
               <span class="agg-val">£30.00</span>
-              <span class="agg-info">
+              <span class="agg-info" data-tip-key="agg_with_own">
                 <i class="agg-info-icon">i</i>
               </span>
             </div>
@@ -753,7 +765,7 @@
           <td class="amt-right">
             <div class="agg">
               <span class="agg-val">£120.00</span>
-              <span class="agg-info">
+              <span class="agg-info" data-tip-key="agg_with_own">
                 <i class="agg-info-icon">i</i>
               </span>
             </div>
@@ -866,8 +878,8 @@
         <th style="width:42px">Qty</th>
         <th>Product Name</th>
         <th style="width:72px">Sub Action</th>
-        <th class="right" style="width:118px">Recurring Total</th>
-        <th class="right" style="width:118px">One Time Total</th>
+        <th class="right" style="width:118px">Recurring Total <span class="col-info" data-tip-key="col_recurring">ⓘ</span></th>
+        <th class="right" style="width:118px">One Time Total <span class="col-info" data-tip-key="col_onetime">ⓘ</span></th>
         <th style="width:68px;text-align:center">Action</th>
       </tr></thead>
       <tbody>
@@ -940,16 +952,132 @@
         </tr>
         <tr>
           <td colspan="4" style="background:#fafaf9;padding:10px 12px;font-size:12px">
-            <strong>📊 Own Charges button visibility rule:</strong> Show the icon only when this specific product has ITS OWN charge(s) with adjustments.
-            A product that has children but no own adjusted charges → show grey aggregate total with ⓘ icon, no 📊 Own Charges button (that only appears when OWN charges are adjusted).
+            <strong>📊 Own Charges button visibility rule:</strong> Show the button only when this specific product has ITS OWN charge(s) with adjustments.
+            A product that has children but no own adjusted charges (pure container) → show grey aggregate total + ⓘ icon only. No 📊 Own Charges button.
+            See <em>Scenario F</em> for a visual example.
             <br/><br/>
-            <strong>ⓘ icon on aggregate:</strong> Always present on parent rows (root/bundle). Hovering explains "this is a rolled-up total — expand or use 📊 Own Charges to see where adjustments are applied."
+            <strong>ⓘ icon on aggregate — two tooltip variants:</strong>
+            <br/>• <em>Row has own charges:</em> "Rolled-up total — expand to see children; use 📊 Own Charges to see this product's own waterfall."
+            <br/>• <em>Pure container (no own charges):</em> "Rolled-up total — this product has no own charges; expand to see individual child charge breakdowns."
+            <br/><br/>
+            <strong>Column header ⓘ icons (Recurring Total / One Time Total):</strong> Both column headers carry a subtle ⓘ that on hover explains their dual meaning: aggregate sum on parent/bundle rows, direct charge on leaf rows. This resolves the ambiguity without renaming the columns or adding extra columns.
           </td>
         </tr>
       </tbody>
     </table>
   </div>
 
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     F — Pure container (no own charges)
+══════════════════════════════════════════ -->
+<div id="s6" class="scene" style="display:none">
+
+  <div class="note">
+    <strong>Pure container — root has no own charges</strong>
+    Business Cloud Suite is a container product: it groups child products together but carries <strong>no own charges</strong> itself.
+    The root row shows a grey aggregate total + ⓘ hover icon — but <strong>no 📊 Own Charges button</strong>,
+    because there is no own-charge waterfall to open.
+    Compare with Scenarios A–C where the root/bundle DID have own charges and the 📊 button was present.
+  </div>
+
+  <div class="key-bar">
+    <span class="klabel">Key</span>
+    <span class="key-item grey-item">⬜ £20.00 &nbsp;Aggregate total — pure container, <strong>no 📊 button</strong></span>
+    <span class="key-sep">|</span>
+    <span class="key-item grey-item"><i style="border:1px solid #b0b0b0;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-style:normal">i</i> &nbsp;Hover: "no own charges — expand for child breakdowns"</span>
+    <span class="key-sep">|</span>
+    <span class="key-item blue-item">🔵 £20.00 / <s style="font-size:11px">£25</s> &nbsp;Leaf charge adjusted — click to see waterfall</span>
+  </div>
+
+  <div class="card">
+    <div class="card-bar">062 Acme Tech · Business Cloud Suite · expanded</div>
+    <table>
+      <thead><tr>
+        <th style="width:155px">Member / Group</th>
+        <th style="width:42px">Qty</th>
+        <th>Product Name</th>
+        <th style="width:72px">Sub Action</th>
+        <th class="right" style="width:118px">Recurring Total <span class="col-info" data-tip-key="col_recurring">ⓘ</span></th>
+        <th class="right" style="width:118px">One Time Total <span class="col-info" data-tip-key="col_onetime">ⓘ</span></th>
+        <th style="width:68px;text-align:center">Action</th>
+      </tr></thead>
+      <tbody>
+
+        <!-- ROOT — pure container, no own charges
+             Recurring Total = Cloud Storage £20 only (root own = £0)
+             One Time Total  = Support Package £85 only (root own = £0)
+             NO 📊 Own Charges button.
+        -->
+        <tr class="r-root">
+          <td>062 Acme Tech</td><td>1</td>
+          <td>
+            <div class="pn">
+              <span class="chev">∨</span>
+              <span class="pn-text">Business Cloud Suite</span>
+              <!-- No .wfi button — this product has no own charges -->
+            </div>
+          </td>
+          <td>—</td>
+          <td class="amt-right">
+            <div class="agg">
+              <span class="agg-val">£20.00</span>
+              <span class="agg-info" data-tip-key="agg_no_own">
+                <i class="agg-info-icon">i</i>
+              </span>
+            </div>
+          </td>
+          <td class="amt-right">
+            <div class="agg">
+              <span class="agg-val">£85.00</span>
+              <span class="agg-info" data-tip-key="agg_no_own">
+                <i class="agg-info-icon">i</i>
+              </span>
+            </div>
+          </td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+        <!-- Cloud Storage — leaf, recurring adjusted £25→£20 -->
+        <tr class="r-leaf">
+          <td></td><td>1</td>
+          <td class="i1"><span class="tl"></span>Cloud Storage</td>
+          <td>—</td>
+          <td class="amt-right">
+            <div class="leaf-adj">
+              <a class="leaf-link" onclick="openM('m-cloud')">£20.00</a>
+              <span class="leaf-orig">£25.00</span>
+            </div>
+          </td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+        <!-- Support Package — leaf, one-time adjusted £100→£85 -->
+        <tr class="r-leaf">
+          <td></td><td>1</td>
+          <td class="i1"><span class="tl"></span>Support Package</td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="amt-right">
+            <div class="leaf-adj">
+              <a class="leaf-link" onclick="openM('m-support')">£85.00</a>
+              <span class="leaf-orig">£100.00</span>
+            </div>
+          </td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
+      </tbody>
+    </table>
+    <div class="legend">
+      <div class="li"><div class="ls" style="background:#706e6b"></div>Grey aggregate on root — no 📊 Own Charges button (root carries no own charges)</div>
+      <div class="li"><div class="ls" style="background:#e8e8e8;border:1px solid #ccc"></div>ⓘ tooltip: "No own charges — expand to see child charge breakdowns"</div>
+      <div class="li"><div class="ls" style="background:#0176d3"></div>Blue + strikethrough on leaf cells = charge adjusted → click to see waterfall</div>
+    </div>
+  </div>
 </div>
 
 
@@ -1098,6 +1226,34 @@
   </div>
 </div>
 
+<!-- Cloud Storage — Monthly waterfall (Scenario F) -->
+<div class="overlay" id="m-cloud">
+  <div class="modal">
+    <div class="mhdr"><h2>📊 Price Waterfall</h2><button class="mclose" onclick="closeM('m-cloud')">×</button></div>
+    <div class="mtabs"><button class="mtab active">Monthly</button><button class="mtab">One Time</button></div>
+    <div class="mbody">
+      <div class="wf-sec">Monthly Charge · Cloud Storage</div>
+      <div class="wf-row"><div class="wl"><div class="wl-m">Base Price</div></div><div class="wa base">£25.00</div></div>
+      <div class="wf-row"><div class="wl"><div class="wl-m">Discount</div><div class="wl-s">CPQAccountDis</div></div><div class="wa disc">−£5.00</div></div>
+      <div class="wf-row tot"><div class="wl"><div class="wl-m">Total</div></div><div class="wa tot">£20.00</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Support Package — One Time waterfall (Scenario F) -->
+<div class="overlay" id="m-support">
+  <div class="modal">
+    <div class="mhdr"><h2>📊 Price Waterfall</h2><button class="mclose" onclick="closeM('m-support')">×</button></div>
+    <div class="mtabs"><button class="mtab">Monthly</button><button class="mtab active">One Time</button></div>
+    <div class="mbody">
+      <div class="wf-sec">One Time Charge · Support Package</div>
+      <div class="wf-row"><div class="wl"><div class="wl-m">Base Price</div></div><div class="wa base">£100.00</div></div>
+      <div class="wf-row"><div class="wl"><div class="wl-m">Discount</div><div class="wl-s">testQuoteForContractDisc01</div></div><div class="wa disc">−£15.00</div></div>
+      <div class="wf-row tot"><div class="wl"><div class="wl-m">Total</div></div><div class="wa tot">£85.00</div></div>
+    </div>
+  </div>
+</div>
+
 <div style="height:48px"></div>
 
 <!-- Global tooltip rendered at body level — never clipped by table overflow -->
@@ -1128,24 +1284,48 @@
     btn.classList.add('active');
   }
 
-  /* ── Global floating tooltip for .agg-info icons ──
-     Appended to <body> so it is never clipped by table/card overflow.
+  /* ── Global floating tooltip — body-level, never clipped ──
+     Any element with data-tip-key triggers it.
   ── */
   const tip = document.getElementById('global-tip');
 
-  const TOOLTIP_HTML =
-    '<strong>Rolled-up total</strong>' +
-    'This is the sum of all charges across every product in this bundle, ' +
-    'with any adjustments already applied at the individual charge level.' +
-    '<ul>' +
-    '<li><b>Expand this bundle</b> — each child product shows its own adjusted charge</li>' +
-    '<li>Use <b>📊 Own Charges</b> — to view adjustments applied to this product\'s own charges</li>' +
-    '</ul>';
+  const TIPS = {
+    agg_with_own:
+      '<strong>Rolled-up total</strong>' +
+      'This is the sum of all charges across every product in this bundle, with adjustments already applied at each individual charge level.' +
+      '<ul>' +
+      '<li><b>Expand this bundle</b> — each child shows its own adjusted charge</li>' +
+      '<li>Use <b>📊 Own Charges</b> — to view adjustments on this product\'s own charges</li>' +
+      '</ul>',
+
+    agg_no_own:
+      '<strong>Rolled-up total — no own charges</strong>' +
+      'This product has no charges of its own. This value is the sum of charges from its included products, with adjustments already applied at the individual product level.' +
+      '<ul>' +
+      '<li><b>Expand this bundle</b> — each child shows its own adjusted charge</li>' +
+      '</ul>',
+
+    col_recurring:
+      '<strong>What "Recurring Total" shows</strong>' +
+      '<ul>' +
+      '<li><b>Bundle / root row:</b> sum of all recurring charges across every product in this bundle (child-level adjustments already included)</li>' +
+      '<li><b>Individual product row:</b> this product\'s own recurring charge — blue value = adjusted, click to see the full breakdown</li>' +
+      '</ul>',
+
+    col_onetime:
+      '<strong>What "One Time Total" shows</strong>' +
+      '<ul>' +
+      '<li><b>Bundle / root row:</b> sum of all one-time charges across every product in this bundle (child-level adjustments already included)</li>' +
+      '<li><b>Individual product row:</b> this product\'s own one-time charge — blue value = adjusted, click to see the full breakdown</li>' +
+      '</ul>',
+  };
 
   document.addEventListener('mouseover', function(e) {
-    const icon = e.target.closest('.agg-info');
-    if (!icon) return;
-    tip.innerHTML = TOOLTIP_HTML;
+    const el = e.target.closest('[data-tip-key]');
+    if (!el) return;
+    const html = TIPS[el.dataset.tipKey];
+    if (!html) return;
+    tip.innerHTML = html;
     tip.style.display = 'block';
     positionTip(e);
   });
@@ -1155,7 +1335,7 @@
   });
 
   document.addEventListener('mouseout', function(e) {
-    if (e.target.closest('.agg-info')) tip.style.display = 'none';
+    if (e.target.closest('[data-tip-key]')) tip.style.display = 'none';
   });
 
   function positionTip(e) {
