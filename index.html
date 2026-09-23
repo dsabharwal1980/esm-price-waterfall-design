@@ -463,7 +463,7 @@
           <td>060 Anderson Junction</td><td>1</td>
           <td>
             <div class="pn">
-              <span class="chev">∨</span>
+              <span class="chev" onclick="toggleGroup('grp-s1',this)" style="cursor:pointer" title="Click to collapse">∨</span>
               <span class="pn-text">Business Internet Enhanced</span>
               <!--
                 "Own Charges" button: root has BOTH recurring and one-time own charges, both adjusted.
@@ -500,7 +500,7 @@
         </tr>
 
         <!-- CHILD: Internet Security Software — no charge -->
-        <tr class="r-leaf">
+        <tr class="r-leaf" data-groups="grp-s1">
           <td></td><td>1</td>
           <td class="i1"><span class="tl"></span>Internet Security Software</td>
           <td>—</td>
@@ -510,7 +510,7 @@
         </tr>
 
         <!-- CHILD: CPE — no charge -->
-        <tr class="r-leaf">
+        <tr class="r-leaf" data-groups="grp-s1">
           <td></td><td>1</td>
           <td class="i1"><span class="tl"></span>CPE</td>
           <td>—</td>
@@ -520,7 +520,7 @@
         </tr>
 
         <!-- CHILD: Installation — adjusted OT charge → BLUE + clickable -->
-        <tr class="r-leaf">
+        <tr class="r-leaf" data-groups="grp-s1">
           <td></td><td>1</td>
           <td class="i1"><span class="tl"></span>Installation</td>
           <td>—</td>
@@ -539,7 +539,7 @@
         </tr>
 
         <!-- CHILD: Public Wi-Fi — no charge -->
-        <tr class="r-leaf">
+        <tr class="r-leaf" data-groups="grp-s1">
           <td></td><td>1</td>
           <td class="i1"><span class="tl"></span>Public Wi-Fi</td>
           <td>—</td>
@@ -549,7 +549,7 @@
         </tr>
 
         <!-- CHILD: LTE Backup — no charge -->
-        <tr class="r-leaf">
+        <tr class="r-leaf" data-groups="grp-s1">
           <td></td><td>1</td>
           <td class="i1"><span class="tl"></span>LTE Backup</td>
           <td>—</td>
@@ -559,7 +559,7 @@
         </tr>
 
         <!-- CHILD: Static IP — no charge -->
-        <tr class="r-leaf">
+        <tr class="r-leaf" data-groups="grp-s1">
           <td></td><td>1</td>
           <td class="i1"><span class="tl"></span>Static IP</td>
           <td>—</td>
@@ -569,7 +569,7 @@
         </tr>
 
         <!-- CHILD: Unlimited Data Add-on — no charge -->
-        <tr class="r-leaf">
+        <tr class="r-leaf" data-groups="grp-s1">
           <td></td><td>1</td>
           <td class="i1"><span class="tl"></span>Unlimited Data Add-on</td>
           <td>—</td>
@@ -591,16 +591,17 @@
 
 
 <!-- ═══════════════════════════════════════
-     B — 2-Level collapsed
+     B — 2-Level collapsed / expandable
 ══════════════════════════════════════════ -->
 <div id="s2" class="scene" style="display:none">
   <div class="note">
-    <strong>Collapsed state</strong>
-    Only the root row is visible. The grey total shows the final rolled-up value — hover the ⓘ icon to understand what it includes.
-    Expand to see individual child charges. Use the <strong>📊 Own Charges</strong> button to inspect the root's own charge waterfall.
+    <strong>Collapsed state — click the ▹ chevron to expand</strong>
+    Only the root row is visible initially. The grey total shows the final rolled-up value — hover the ⓘ icon to understand what it includes.
+    Click the <strong>▹</strong> chevron next to the product name to reveal individual child charges.
+    Use the <strong>📊 Own Charges</strong> button to inspect the root's own charge waterfall (independent of expand/collapse).
   </div>
   <div class="card">
-    <div class="card-bar">060 Anderson Junction · collapsed</div>
+    <div class="card-bar">060 Anderson Junction · click ▹ to expand</div>
     <table>
       <thead><tr>
         <th style="width:155px">Member / Group</th>
@@ -616,7 +617,7 @@
           <td>060 Anderson Junction</td><td>1</td>
           <td>
             <div class="pn">
-              <span class="chev">›</span>
+              <span class="chev" onclick="toggleGroup('grp-s2',this)" style="cursor:pointer" title="Click to expand">›</span>
               <span class="pn-text">Business Internet Enhanced</span>
               <span class="wfi" onclick="openM('m-root')">📊 Own Charges<span class="tip">View this product's own price breakdown</span></span>
             </div>
@@ -630,8 +631,77 @@
               </span></div></td>
           <td style="text-align:center"><button class="btn">Add</button></td>
         </tr>
+
+        <!-- Child rows — hidden until chevron clicked -->
+        <tr class="r-leaf" data-groups="grp-s2" style="display:none">
+          <td></td><td>1</td>
+          <td class="i1"><span class="tl"></span>Internet Security Software</td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+        <tr class="r-leaf" data-groups="grp-s2" style="display:none">
+          <td></td><td>1</td>
+          <td class="i1"><span class="tl"></span>CPE</td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+        <tr class="r-leaf" data-groups="grp-s2" style="display:none">
+          <td></td><td>1</td>
+          <td class="i1"><span class="tl"></span>Installation</td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="amt-right">
+            <div class="leaf-adj">
+              <a class="leaf-link" onclick="openM('m-install')">£465.00</a>
+              <span class="leaf-orig">£500.00</span>
+            </div>
+          </td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+        <tr class="r-leaf" data-groups="grp-s2" style="display:none">
+          <td></td><td>1</td>
+          <td class="i1"><span class="tl"></span>Public Wi-Fi</td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+        <tr class="r-leaf" data-groups="grp-s2" style="display:none">
+          <td></td><td>1</td>
+          <td class="i1"><span class="tl"></span>LTE Backup</td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+        <tr class="r-leaf" data-groups="grp-s2" style="display:none">
+          <td></td><td>1</td>
+          <td class="i1"><span class="tl"></span>Static IP</td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+        <tr class="r-leaf" data-groups="grp-s2" style="display:none">
+          <td></td><td>1</td>
+          <td class="i1"><span class="tl"></span>Unlimited Data Add-on</td>
+          <td>—</td>
+          <td class="plain-zero">£0.00</td>
+          <td class="plain-zero">£0.00</td>
+          <td style="text-align:center"><button class="btn">Add</button></td>
+        </tr>
+
       </tbody>
     </table>
+    <div class="legend">
+      <div class="li">▹ / ∨ chevron = click to expand or collapse child products</div>
+      <div class="li"><div class="ls" style="background:#706e6b"></div>Grey value = aggregate total (no interaction on amount cell)</div>
+      <div class="li">📊 Own Charges button works independently of expand/collapse state</div>
+    </div>
   </div>
 </div>
 
@@ -701,7 +771,7 @@
           <td>060 Anderson Junction</td><td>1</td>
           <td>
             <div class="pn">
-              <span class="chev">∨</span>
+              <span class="chev" onclick="toggleGroup('grp-s3r',this)" style="cursor:pointer" title="Click to collapse">∨</span>
               <span class="pn-text">Business Internet Enhanced</span>
               <span class="wfi" onclick="openM('m-root')">📊 Own Charges<span class="tip">View this product's own price breakdown</span></span>
             </div>
@@ -736,12 +806,12 @@
              Bundle Aggregate Recurring = £15 own + £15 VPN = £30
              Bundle Aggregate One Time  = £0 own  + £120 VPN = £120
         -->
-        <tr class="r-bundle">
+        <tr class="r-bundle" data-groups="grp-s3r">
           <td></td><td>1</td>
           <td class="i1">
             <div class="pn">
               <span class="tl"></span>
-              <span class="chev" style="background:#f0f4f8;border-color:#b0b0b0">∨</span>
+              <span class="chev" onclick="toggleGroup('grp-s3s',this)" style="background:#f0f4f8;border-color:#b0b0b0;cursor:pointer" title="Click to collapse">∨</span>
               <span class="pn-text">Security Suite</span>
               <!--
                 Security Suite has children → aggregate treatment.
@@ -774,7 +844,7 @@
         </tr>
 
         <!-- ═══ LEVEL 2: Firewall — leaf, no charges ═══ -->
-        <tr class="r-leaf">
+        <tr class="r-leaf" data-groups="grp-s3r grp-s3s">
           <td></td><td>1</td>
           <td class="i2"><div class="pn"><span class="tl"></span>Firewall</div></td>
           <td>—</td>
@@ -788,7 +858,7 @@
              One Time:  £150 → £120
              Each cell is independently blue+clickable.
         -->
-        <tr class="r-leaf">
+        <tr class="r-leaf" data-groups="grp-s3r grp-s3s">
           <td></td><td>1</td>
           <td class="i2"><div class="pn"><span class="tl"></span>VPN Service</div></td>
           <td>—</td>
@@ -816,7 +886,7 @@
         </tr>
 
         <!-- ═══ LEVEL 1: CPE — leaf, no charges ═══ -->
-        <tr class="r-leaf">
+        <tr class="r-leaf" data-groups="grp-s3r">
           <td></td><td>1</td>
           <td class="i1"><div class="pn"><span class="tl"></span>CPE</div></td>
           <td>—</td>
@@ -826,7 +896,7 @@
         </tr>
 
         <!-- ═══ LEVEL 1: Installation — leaf, adjusted OT ═══ -->
-        <tr class="r-leaf">
+        <tr class="r-leaf" data-groups="grp-s3r">
           <td></td><td>1</td>
           <td class="i1"><div class="pn"><span class="tl"></span>Installation</div></td>
           <td>—</td>
@@ -841,7 +911,7 @@
         </tr>
 
         <!-- ═══ LEVEL 1: Public Wi-Fi — leaf, no charges ═══ -->
-        <tr class="r-leaf">
+        <tr class="r-leaf" data-groups="grp-s3r">
           <td></td><td>1</td>
           <td class="i1"><div class="pn"><span class="tl"></span>Public Wi-Fi</div></td>
           <td>—</td>
@@ -1015,7 +1085,7 @@
           <td>062 Acme Tech</td><td>1</td>
           <td>
             <div class="pn">
-              <span class="chev">∨</span>
+              <span class="chev" onclick="toggleGroup('grp-s6',this)" style="cursor:pointer" title="Click to collapse">∨</span>
               <span class="pn-text">Business Cloud Suite</span>
               <!-- No .wfi button — this product has no own charges -->
             </div>
@@ -1041,7 +1111,7 @@
         </tr>
 
         <!-- Cloud Storage — leaf, recurring adjusted £25→£20 -->
-        <tr class="r-leaf">
+        <tr class="r-leaf" data-groups="grp-s6">
           <td></td><td>1</td>
           <td class="i1"><span class="tl"></span>Cloud Storage</td>
           <td>—</td>
@@ -1056,7 +1126,7 @@
         </tr>
 
         <!-- Support Package — leaf, one-time adjusted £100→£85 -->
-        <tr class="r-leaf">
+        <tr class="r-leaf" data-groups="grp-s6">
           <td></td><td>1</td>
           <td class="i1"><span class="tl"></span>Support Package</td>
           <td>—</td>
@@ -1274,6 +1344,18 @@
     btn.classList.add('active');
     modal.querySelectorAll('[id^="tab-"]').forEach(p => p.style.display = 'none');
     document.getElementById(showTabId).style.display = 'block';
+  }
+
+  /* ── Expand / collapse child rows ──
+     groupId is a word in the row's data-groups attribute (space-separated list).
+     Supports nested groups: a row can belong to multiple groups (e.g. "grp-s3r grp-s3s").
+  ── */
+  function toggleGroup(groupId, chev) {
+    const rows = document.querySelectorAll('[data-groups~="' + groupId + '"]');
+    const isExpanded = chev.textContent.trim() === '∨';
+    rows.forEach(r => r.style.display = isExpanded ? 'none' : '');
+    chev.textContent = isExpanded ? '›' : '∨';
+    chev.title = isExpanded ? 'Click to expand' : 'Click to collapse';
   }
 
   /* ── Scenario tabs ── */
