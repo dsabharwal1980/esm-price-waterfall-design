@@ -153,10 +153,8 @@
     border-radius:12px;
     border:1px solid #aacfef;
     background:var(--sf-blue-tint);
-    margin-left:10px;
     cursor:pointer;
     font-size:11px; font-weight:600; color:var(--sf-blue);
-    flex-shrink:0; position:relative;
     white-space:nowrap;
     transition:background .12s,border-color .12s,color .12s,box-shadow .12s;
     box-shadow: 0 1px 3px rgba(1,118,211,.15);
@@ -166,16 +164,6 @@
     border-color:var(--sf-blue);
     box-shadow: 0 2px 6px rgba(1,118,211,.25);
   }
-  .wfi .tip {
-    display:none;
-    position:absolute; bottom:28px; left:50%;
-    transform:translateX(-50%);
-    background:#032e61; color:#fff;
-    font-size:10px; padding:3px 8px; border-radius:3px;
-    white-space:nowrap; z-index:30; pointer-events:none;
-  }
-  .wfi:hover .tip { display:block; }
-
   /* ── Amount cell variants ── */
 
   /*
@@ -449,7 +437,7 @@
         <th style="width:155px">Member / Group</th>
         <th style="width:42px">Qty</th>
         <th>Product Name</th>
-        <th style="width:72px">Sub Action</th>
+        <th style="width:120px">Sub Action</th>
         <th class="right" style="width:118px">Recurring Total <span class="col-info" data-tip-key="col_recurring">ⓘ</span></th>
         <th class="right" style="width:118px">One Time Total <span class="col-info" data-tip-key="col_onetime">ⓘ</span></th>
         <th style="width:68px;text-align:center">Action</th>
@@ -471,10 +459,9 @@
                 "Own Charges" button: root has BOTH recurring and one-time own charges, both adjusted.
                 Modal will show Monthly tab (£50→£25) and One Time tab (£200→£180).
               -->
-              <span class="wfi" onclick="openM('m-root')">📊 Own Charges<span class="tip">View this product's own price breakdown</span></span>
             </div>
           </td>
-          <td>—</td>
+          <td><span class="wfi" onclick="openM('m-root')">📊 Own Charges</span></td>
 
           <!-- Recurring Total — grey aggregate, final value only, no strikethrough -->
           <td class="amt-right">
@@ -609,7 +596,7 @@
         <th style="width:155px">Member / Group</th>
         <th style="width:42px">Qty</th>
         <th>Product Name</th>
-        <th style="width:72px">Sub Action</th>
+        <th style="width:120px">Sub Action</th>
         <th class="right" style="width:118px">Recurring Total <span class="col-info" data-tip-key="col_recurring">ⓘ</span></th>
         <th class="right" style="width:118px">One Time Total <span class="col-info" data-tip-key="col_onetime">ⓘ</span></th>
         <th style="width:68px;text-align:center">Action</th>
@@ -621,10 +608,9 @@
             <div class="pn">
               <span class="chev" onclick="toggleGroup('grp-s2',this)" style="cursor:pointer" title="Click to expand">›</span>
               <span class="pn-text">Business Internet Enhanced</span>
-              <span class="wfi" onclick="openM('m-root')">📊 Own Charges<span class="tip">View this product's own price breakdown</span></span>
             </div>
           </td>
-          <td>—</td>
+          <td><span class="wfi" onclick="openM('m-root')">📊 Own Charges</span></td>
           <td class="amt-right"><div class="agg"><span class="agg-val">£25.00</span><span class="agg-info" data-tip-key="agg_with_own">
                 <i class="agg-info-icon">i</i>
               </span></div></td>
@@ -751,7 +737,7 @@
         <th style="width:155px">Member / Group</th>
         <th style="width:42px">Qty</th>
         <th>Product Name</th>
-        <th style="width:72px">Sub Action</th>
+        <th style="width:120px">Sub Action</th>
         <th class="right" style="width:118px">Recurring Total <span class="col-info" data-tip-key="col_recurring">ⓘ</span></th>
         <th class="right" style="width:118px">One Time Total <span class="col-info" data-tip-key="col_onetime">ⓘ</span></th>
         <th style="width:68px;text-align:center">Action</th>
@@ -775,10 +761,9 @@
             <div class="pn">
               <span class="chev" onclick="toggleGroup('grp-s3r',this)" style="cursor:pointer" title="Click to collapse">∨</span>
               <span class="pn-text">Business Internet Enhanced</span>
-              <span class="wfi" onclick="openM('m-root')">📊 Own Charges<span class="tip">View this product's own price breakdown</span></span>
             </div>
           </td>
-          <td>—</td>
+          <td><span class="wfi" onclick="openM('m-root')">📊 Own Charges</span></td>
           <!-- Root aggregate Recurring: £25 own + £30 SS (£15 own + £15 VPN) = £55 -->
           <td class="amt-right">
             <div class="agg">
@@ -820,10 +805,9 @@
                 Has own recurring charge adjusted → 📊 Own Charges button present. Grey aggregate with ⓘ hover.
                 One Time tab in modal will say "No own charge."
               -->
-              <span class="wfi" onclick="openM('m-ss')">📊 Own Charges<span class="tip">View this product's own price breakdown</span></span>
             </div>
           </td>
-          <td>—</td>
+          <td><span class="wfi" onclick="openM('m-ss')">📊 Own Charges</span></td>
           <!-- Bundle aggregate Recurring: £15 own + £15 VPN = £30 -->
           <td class="amt-right">
             <div class="agg">
@@ -949,7 +933,7 @@
         <th style="width:155px">Member / Group</th>
         <th style="width:42px">Qty</th>
         <th>Product Name</th>
-        <th style="width:72px">Sub Action</th>
+        <th style="width:120px">Sub Action</th>
         <th class="right" style="width:118px">Recurring Total <span class="col-info" data-tip-key="col_recurring">ⓘ</span></th>
         <th class="right" style="width:118px">One Time Total <span class="col-info" data-tip-key="col_onetime">ⓘ</span></th>
         <th style="width:68px;text-align:center">Action</th>
@@ -1071,7 +1055,7 @@
         <th style="width:155px">Member / Group</th>
         <th style="width:42px">Qty</th>
         <th>Product Name</th>
-        <th style="width:72px">Sub Action</th>
+        <th style="width:120px">Sub Action</th>
         <th class="right" style="width:118px">Recurring Total <span class="col-info" data-tip-key="col_recurring">ⓘ</span></th>
         <th class="right" style="width:118px">One Time Total <span class="col-info" data-tip-key="col_onetime">ⓘ</span></th>
         <th style="width:68px;text-align:center">Action</th>
